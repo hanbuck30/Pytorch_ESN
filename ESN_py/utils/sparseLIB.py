@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import argparse
-from .setting import set_random_seed, set_common, set_gd
+from .setting import set_random_seed, set_common, set_gd, set_online
 
 class sparseESN(nn.Module):
     def __init__(self, args):
@@ -14,6 +14,7 @@ class sparseESN(nn.Module):
         set_random_seed(0)
         set_common(self, args)
         set_gd(self, args)
+        set_online(self, args)
 
         # Initialize constant tensor with value 1
         self.one = torch.tensor([[1.0]], device=device)

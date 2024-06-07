@@ -28,9 +28,9 @@ def get_torch_func(args): # 파라미터 inter_unit 데이터 타입을 맞춰�
 
 def set_common(self, args):
     self.resSize = int(args.resSize)
-    self.n_feature = np.around(args.n_feature,5)
-    self.damping = np.around(args.damping,5)
+    self.n_feature = args.input_dim
     self.output_dim = args.output_dim
+    self.damping = np.around(args.damping,5)
     self.spectral_radius = np.around(args.spectral_radius,5)
     self.weight_scaling = np.around(args.weight_scaling,5)
     self.input_scaling = np.around(args.input_scaling,5)
@@ -38,7 +38,8 @@ def set_common(self, args):
     self.sparsity = np.around(args.sparsity,5)
     self.Loss_function = get_loss_func(args)
     self.Test = args.Test
-  
+    self.task = args.task
+    
     inter_unit1 = get_torch_func(args)
     self.inter_unit = inter_unit1
     
@@ -46,6 +47,10 @@ def set_gd(self, args):
     self.learning_rate = args.learning_rate
     self.epoch = args.epoch
     self.l2_lambda = args.l2_lambda # L2 규제 계수
+
+def set_online(self, args):
+    self.lambda_ = args.lambda_
+    self.n_gamma = args.n_gamma 
 
 def set_random_seed(seed_val):
     random.seed(seed_val)
