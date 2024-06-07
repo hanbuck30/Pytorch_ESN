@@ -29,11 +29,11 @@ Ensure you have Python 3.8 or higher installed. Install the necessary dependenci
 
 ```bash
 pip install -r requirements.txt
-
+```
 ### Installation
 
 Clone the repository and navigate to the project directory:
 ```bash
 git clone https://github.com/hanbuck30/Pytorch_ESN.git
-
+```
 
