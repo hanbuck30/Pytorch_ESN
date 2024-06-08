@@ -63,7 +63,7 @@ class ESN(sparseESN):
         input_source = check_type(self, input_source=input_source, input_type=input_type)[0]
         
         # Initialize reservoir state
-        x = torch.zeros((1, self.resSize), device=self.device)
+        self.x = torch.zeros((1, self.resSize), device=self.device)
         predicted_val = torch.zeros(n_input, self.output_dim)
 
         for t in range(n_input):
@@ -75,5 +75,23 @@ class ESN(sparseESN):
             # Forward pass
             prediction = torch.matmul(extended_state, self.Wout).reshape(1, -1)
             predicted_val[t, :] = prediction
+
+        return predicted_val
+    
+
+    def generate(self, u, generate_len, u_type = "float"):
+        # Initialize reservoir state
+        u = check_dim(u)[0]
+        predicted_val = torch.zeros(generate_len, self.output_dim)
+        u = check_type(self, input_source=u, input_type=u_type)[0]
+
+        for t in range(generate_len):
+            self.x = self._update_state(u)
+            extended_state = torch.hstack([self.one, u, self.x])
+
+            # Forward pass
+            prediction = torch.matmul(extended_state, self.Wout).reshape(1, -1)
+            predicted_val[t, :] = prediction
+            u = prediction
 
         return predicted_val

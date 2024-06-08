@@ -35,7 +35,7 @@ def gd_rule(self, Yt, input_source, n_input, criterion, optimizer, epoch):
     time_required = end_time - start_time
 
     # Print the training loss
-    print("epoch :{}/{}  Loss : {:.5f}  time_required : {}".format(epoch, self.epoch, loss.item(), time_required))
+    print("epoch :{}/{}  Loss : {:.5f}  time_required : {:.3f}".format(epoch, self.epoch, loss.item(), time_required))
     return 
 
 

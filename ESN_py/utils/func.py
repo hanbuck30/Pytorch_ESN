@@ -9,12 +9,16 @@ def check_dim(input_source, output=None):
         pass
     elif input_source.ndim == 1:
         input_source = input_source.reshape(-1, 1)
+    elif input_source.ndim == 0:
+        input_source = input_source.reshape(-1, 1)
         # print("It needs 2-dimensions, so we're going to change the dimensions")
 
     # Check and reshape output to 2D if necessary
     if output is None or output.ndim == 2:
         pass
     elif output.ndim == 1:
+        output = output.reshape(-1, 1)
+    elif output.ndim == 0:
         output = output.reshape(-1, 1)
         # print("It needs 2-dimensions, so we're going to change the dimensions")
     return input_source, output
