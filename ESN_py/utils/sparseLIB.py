@@ -33,6 +33,7 @@ class sparseESN(nn.Module):
         # Initial state (not a Parameter, since we won't be updating it via traditional backpropagation)
         self.x = torch.zeros((1, self.resSize)).to(device)
 
+
     def _create_sparse_reservoir(self, row_size, col_size, sparsity, spectral_radius, typ, input_scaling, weight_scaling):
         # Create sparse matrix with specified sparsity, then convert to PyTorch dense tensor for simplicity
         # Define the size and desired sparsity
@@ -68,3 +69,9 @@ class sparseESN(nn.Module):
         # Update the reservoir state
         self.x = (1 - self.damping) * self.x + self.damping * self.inter_unit(torch.matmul(torch.hstack([self.one, u]), self.Win) + torch.matmul(self.x, self.W))
         return self.x
+    
+    def batch_update_state(self, u):
+        # Update the reservoir state
+        self.ones = torch.concat([self.one]*u.shape[0])
+        self.batch_x = (1 - self.damping) * self.batch_x + self.damping * self.inter_unit(torch.matmul(torch.hstack([self.ones, u]), self.Win) + torch.matmul(self.batch_x, self.W))
+        return self.batch_x

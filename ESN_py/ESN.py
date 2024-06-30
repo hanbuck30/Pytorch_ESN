@@ -4,10 +4,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+from torch.utils.data import DataLoader
 
 from .utils.sparseLIB import sparseESN
 from .utils.func import check_dim, check_type, metric_func
-from .learning_algorithm.Gradient_descent import gd_init, gd_rule
+from .learning_algorithm.Gradient_descent import gd_init, gd_rule, batch_gd_rule
 from .learning_algorithm.Online_learning import Online_init, Online_rule
 from .learning_algorithm.Inverse_matrix import inverse_init, inverse_rule
 
@@ -21,24 +22,33 @@ class ESN(sparseESN):
         USE_CUDA = torch.cuda.is_available()
         self.device = torch.device('cuda:0' if USE_CUDA else 'cpu')
         
-    def fit(self, input_source, output, test_x=None, test_y=None, test_x_type="float", test_y_type="float"):
-        # Check dimensions and types of input and output
-        input_source, output = check_dim(input_source, output)
-        input_source, Yt = check_type(self, input_source, output, test_x_type, test_y_type)
+    def fit(self, input_source=None, output=None, test_x=None, test_y=None, test_x_type="float", test_y_type="float", dataloader=None, test_dataloader=None):
+        if dataloader is None:
+            # Check dimensions and types of input and output
+            input_source, output = check_dim(input_source, output)
+            input_source, Yt = check_type(self, input_source, output, test_x_type, test_y_type)
 
-        n_input, n_f = input_source.shape
-        
-        if self.Test:
-            test_y = check_type(self, output=test_y, output_type=test_y_type)[1]
+            n_input, n_f = input_source.shape
+ 
+            if self.Test:
+                test_y = check_type(self, output=test_y, output_type=test_y_type)[1]
         
         if self.l_a == "gd":
             criterion, optimizer = gd_init(self)
             # Training loop
             for epoch in tqdm(range(self.epoch)):
-                gd_rule(self, Yt, input_source, n_input, criterion, optimizer, epoch)
-                if self.Test:
-                    predict_result = self.predict(test_x)
+                if dataloader is None:
+                    gd_rule(self, Yt, input_source, n_input, criterion, optimizer, epoch)
+                    if self.Test:
+                        predict_result = self.predict(test_x)
                     metric_func(predict_result, test_y)
+                elif dataloader is not None:
+                    batch_gd_rule(self, dataloader, criterion, optimizer, epoch)
+                    if self.Test:
+                        predict_result = self.batch_predict(test_dataloader)
+                        metric_func(predict_result.view(-1,test_y.shape[1]), test_y.view(-1,test_y.shape[1]))
+
+
 
         elif self.l_a == "online":
             Online_init(self)
@@ -77,6 +87,38 @@ class ESN(sparseESN):
             predicted_val[t, :] = prediction
 
         return predicted_val
+    
+    def batch_predict(self, dataloader):
+        
+        
+        all_pred = None
+        for i, sample in enumerate(dataloader):
+            test_source, Yt = sample
+            test_source = test_source.to(self.device)
+            Yt = Yt.to(self.device) 
+            predicted_val = torch.zeros_like(Yt, dtype=torch.float, device=self.device, requires_grad=False) # prediction data
+
+            batch_size, n_input, input_feature = test_source.shape
+            self.batch_x = torch.zeros((batch_size, self.resSize), device=self.device)
+            _, n_input, output_feature = Yt.shape
+
+            for t in range(n_input):
+                
+                # Making input tensor
+                u = test_source[:,t,:].reshape(batch_size, -1)
+                # Update reservoir state
+                self.batch_x = self.batch_update_state(u)
+                extended_state = torch.hstack([self.ones, u, self.batch_x])
+                # Forward pass
+                prediction = torch.matmul(extended_state, self.Wout)
+                predicted_val[:,t,:] = prediction
+        
+            if all_pred is None:
+                all_pred = predicted_val
+            else:
+                all_pred=torch.concat((all_pred,predicted_val), axis = 0)
+
+        return all_pred
     
 
     def generate(self, u, generate_len, u_type = "float"):
