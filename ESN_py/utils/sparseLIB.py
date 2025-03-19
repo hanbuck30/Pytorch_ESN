@@ -20,7 +20,7 @@ class sparseESN(nn.Module):
         self.one = torch.tensor([[1.0]], device=device)
         
         # Initialize input weights
-        W_in = self._create_sparse_reservoir(1 + self.d_model, self.resSize, self.input_sparsity, self.spectral_radius, "Win", self.input_scaling, self.weight_scaling)
+        W_in = self._create_sparse_reservoir(1 + self.n_feature, self.resSize, self.input_sparsity, self.spectral_radius, "Win", self.input_scaling, self.weight_scaling)
         self.Win = nn.Parameter(W_in, requires_grad=False).to(device)
         
         # Create sparse reservoir
@@ -28,7 +28,7 @@ class sparseESN(nn.Module):
         self.W = nn.Parameter(W_data, requires_grad=False).to(device)
         
         # Initialize output weights
-        self.Wout = nn.Parameter(torch.zeros(1 + self.d_model + self.resSize, self.output_dim, requires_grad=True).to(device))
+        self.Wout = nn.Parameter(torch.zeros(1 + self.n_feature + self.resSize, self.output_dim, requires_grad=True).to(device))
 
         # Initial state (not a Parameter, since we won't be updating it via traditional backpropagation)
         self.x = torch.zeros((1, self.resSize)).to(device)
