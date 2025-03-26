@@ -10,28 +10,30 @@ class sparseESN(nn.Module):
         super(sparseESN, self).__init__()
 
         USE_CUDA = torch.cuda.is_available()
-        device = torch.device('cuda:0' if USE_CUDA else 'cpu')
+        self.device = torch.device('cuda:0' if USE_CUDA else 'cpu')
         set_random_seed(0)
         set_common(self, args)
         set_gd(self, args)
         set_online(self, args)
 
+        self._init()
+    def _init(self):
         # Initialize constant tensor with value 1
-        self.one = torch.tensor([[1.0]], device=device)
+        self.one = torch.tensor([[1.0]], device=self.device)
         
         # Initialize input weights
-        W_in = self._create_sparse_reservoir(1 + self.n_feature, self.resSize, self.input_sparsity, self.spectral_radius, "Win", self.input_scaling, self.weight_scaling)
-        self.Win = nn.Parameter(W_in, requires_grad=False).to(device)
+        W_in = self._create_sparse_reservoir(1 + self.d_model, self.resSize, self.input_sparsity, self.spectral_radius, "Win", self.input_scaling, self.weight_scaling)
+        self.Win = nn.Parameter(W_in, requires_grad=False).to(self.device)
         
         # Create sparse reservoir
         W_data = self._create_sparse_reservoir(self.resSize, self.resSize, self.weight_sparsity, self.spectral_radius, "W", self.input_scaling, self.weight_scaling)
-        self.W = nn.Parameter(W_data, requires_grad=False).to(device)
+        self.W = nn.Parameter(W_data, requires_grad=False).to(self.device)
         
         # Initialize output weights
-        self.Wout = nn.Parameter(torch.zeros(1 + self.n_feature + self.resSize, self.output_dim, requires_grad=True).to(device))
+        self.Wout = nn.Parameter(torch.zeros(1 + self.d_model + self.resSize, self.output_dim, requires_grad=True).to(self.device))
 
         # Initial state (not a Parameter, since we won't be updating it via traditional backpropagation)
-        self.x = torch.zeros((1, self.resSize)).to(device)
+        self.x = torch.zeros((1, self.resSize)).to(self.device)
 
 
     def _create_sparse_reservoir(self, row_size, col_size, sparsity, spectral_radius, typ, input_scaling, weight_scaling):
