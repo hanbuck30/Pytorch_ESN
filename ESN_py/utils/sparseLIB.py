@@ -11,7 +11,7 @@ class sparseESN(nn.Module):
 
         USE_CUDA = torch.cuda.is_available()
         self.device = torch.device('cuda:0' if USE_CUDA else 'cpu')
-        set_random_seed(0)
+        set_random_seed(int(args.esn_seed))
         set_common(self, args)
         set_gd(self, args)
         set_online(self, args)
