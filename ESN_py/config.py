@@ -5,6 +5,7 @@ import argparse
 def parse_args():
     parser = argparse.ArgumentParser()
     print("extracting arguments")
+    parser.add_argument("--esn_seed", type=int, default=42)
     ## Model Settings
     parser.add_argument("--resSize", type=int, default=15000)
     parser.add_argument("--input_dim", type=int, default=122)
